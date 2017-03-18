@@ -11,13 +11,22 @@
 
 using namespace std;
 
+// Bookmarks, user ID -> work ID
 unordered_map<uint64_t, vector<uint64_t> > bookmarks;
+
+// Bookmarks, work ID -> user ID
 unordered_map<uint64_t, vector<uint64_t> > bookmarkReverse;
 
+// Number of users
 const uint64_t USER_COUNT = 10000;
+
+// Average number of bookmarks per user
 const uint64_t AVERAGE_BOOKMARK = 1000;
+
+// Number of works
 const uint64_t WORK_COUNT = 100000;
 
+// Tags of those works, work ID -> set of tags
 unordered_map<uint64_t, unordered_set<string> > workTags;
 
 /* Generator */
@@ -76,9 +85,17 @@ void generateDataSet() {
 
 /* Implementation */
 
+// Maximum sample size
 const size_t MAX_BATCH_SIZE = 200;
+
+// Minimum bookmark count to have the recommender work correctly
+// User with bookmarks less than that gets no result
 const size_t RECOMMENDER_LIMIT = 10;
+
+// Maximum number of users who are used as recommendation source
 const size_t MAX_SOURCE_COUNT = 100;
+
+// Minimum number of shared bookmakrs between the user and a recommendation source
 const size_t SOURCE_SIMILARITY_LOWERBOUND = 10;
 
 vector<uint64_t> fetchRecommendation(uint64_t user, const vector<string> requiredTags, size_t size) {
@@ -157,7 +174,7 @@ vector<uint64_t> fetchRecommendation(uint64_t user, const vector<string> require
     }
   }
 
-  // Results we actually returns
+  // Results we actually return
   vector<uint64_t> normalizedResults(results.size());
 
   for(auto i = normalizedResults.rbegin(); i != normalizedResults.rend(); ++i) {
@@ -172,8 +189,13 @@ vector<uint64_t> fetchRecommendation(uint64_t user, const vector<string> require
 
 uniform_int_distribution<uint64_t> next_user(0, USER_COUNT-1);
 
+// Size of requesting recommendation
 const size_t TEST_RESULT_SIZE = 20;
+
+// Tests per batch
 const size_t TEST_BATCH = 10;
+
+// Number of batches
 const size_t TEST_BATCH_COUNT = 10;
 
 void testOnce() {
@@ -185,6 +207,8 @@ void testOnce() {
   uint64_t user = next_user(gen);
 
   auto results = fetchRecommendation(user, requiredTags, TEST_RESULT_SIZE);
+
+  // Makes sure that the algorithm actually works
   assert(all_of(results.begin(), results.end(), [&requiredTags](uint64_t workId) -> bool {
           for(const auto &tag : requiredTags)
             if(workTags[workId].count(tag) == 0)
